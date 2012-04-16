@@ -1,0 +1,123 @@
+# -- - - - - - - - -     Jobot Manual     - - - - - - - - - - --
+# -
+# - New Factoid:
+# -    wally[,:] inkling (<reply>|<action>|<[verb_here]>) tidbit
+# -
+# -       Example: wally, purple <is> a color
+# -        :: &Joey: Who in their right mind would paint their car 
+# -        ::    flourescent purple?
+# -        :: %wally: purple is a color
+# -        :: &Joey: Thank you wally, I did not know that.....
+# -
+# -       <reply>
+# -          - Special Verb: When the inkling is found, wally, repeats the
+# -            tidbit and only the tidbit.
+# -
+# -            Example: wally, takes the bucket <reply> GIVE ME THE BUCKET!!
+# -
+# -       <action>
+# -          - Special Verb: Acts like reply, except sending it as 
+# -            "\me [tidbit]".
+# -
+# -            Example: wally, kick something <action> kicks the bucket.
+# -
+# -       <[verb_here]>
+# -          - Can be any verb surrounded by <>.
+# -
+# -            Example: wally, Joey <stole> mah bucket!
+# -
+# -       Notes:
+# -          - Putting /me in the beginning of the inkling makes wally only
+# -            match actions.
+# -          - Commands and verbs can be escaped by placing a backslash ('\')
+# -            in front of them.
+# -          - All instances of who* in the tidbit will be replaced with the
+# -            nick of the user that triggered it.
+# -          - All instances of someone* in the tidbit will be replaced with
+# -            a random nick of someone in the channel.
+# -          - You can use sentence beginning ('^') and end ('$') identifiers
+# -            to make wally check for the inkling at the beginning and/or end
+# -            of messages.  Ex: wally, ^yay <reply> I'm so happy for you.
+# -
+# -
+# - Search:
+# -    Syntax:
+# -       wally[,:] search [phrase]
+# -       wally[,:] search [offset] [phrase]
+# -       wally[,:] search[[offset]] [phrase]
+# -       wally[,:] search([offset]) [phrase]
+# -       wally[,:] search{[offset]} [phrase]
+# -
+# -    Examples:
+# -      :: &Joey: wally, search bucket
+# -      :: &Joey: wally, search 5 bucket
+# -      :: &Joey: wally, search[12] bucket
+# -      :: &Joey: wally, search(42) bucket
+# -      :: &Joey: wally, search{8} bucket
+# - 
+# - 
+# - Factoid Lookup:
+# -    Syntax:
+# -       wally[,:] factoid 123
+# -       wally[,:] factoid #123
+# - 
+# - 
+# - Recent Factoid Info:
+# -    Syntax:
+# -       wally[,:] what was that
+# -         - Returns the ID of the most recent factoid.
+# -       wally[,:] who made that
+# -         - Returns the ID and creator of the most recent factoid.
+# - 
+# - 
+# - Removing Factoids:
+# -    Syntax:
+# -       wally[,:] forget that
+# -       wally[,:] undo that
+# -       wally[,:] forget #123
+# -       wally[,:] forget 123
+# - 
+# -    Notes:
+# -       - "undo that" deletes the last CREATED factoid where as 
+# -         "forget that" deletes the last SAID factoid
+# - 
+# - 
+# - Making him shut up
+# -    Syntax:
+# -       wally[,:] shut up
+# -
+# -    Example:
+# -       :: &Joey: wally, shut up
+# -       :: %wally: Ok, Joey, be back in 2 minutes.
+# - 
+# - 
+# - Protecting Factoids (Op+ only):
+# -    Syntax:
+# -       wally[,:] protect that
+# -       wally[,:] protect 123
+# -       wally[,:] protect #123
+# -       wally[,:] unprotect that
+# -       wally[,:] unprotect 123
+# -       wally[,:] unprotect #123
+# - 
+# -    Notes:
+# -       - This command makes the factoid untouchable by non ops.
+# -       - This command only works for operators.
+# -
+# -
+# - Muting Somebody (hOp+ only):
+# -    Syntax:
+# -       wally[,:] mute {nick} [{number}{unit}]
+# -       wally[,:] mute {nick} [(until|til) [search statement]]
+# - 
+# -    Example:
+# -       :: <&Joey> wally, mute Kris until pigs fly
+# -       :: * wally sets mode -v Kris
+# -       :: ...
+# -       :: <+Tan> a pig just flew over my house...
+# -       :: * wally sets mode +v Kris
+# - 
+# - Unmuting Somebody (hOp+ only):
+# -    Syntax:
+# -       wally[,:] unmute {nick}
+# - 
