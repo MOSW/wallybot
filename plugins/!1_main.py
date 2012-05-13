@@ -361,7 +361,11 @@ def msg(s, nick, ident, host, channel, text):
 	
 	#print("In !1_main msg func", meta.canMute(channel, nick), inChannel)
 	
-	if textLower[: 5] == "mute " and meta.canMute(channel, nick) and inChannel:
+	if textLower == "you there?":
+		meta.sendMsg(s, channel, "yes")
+		return True
+	
+	elif textLower[: 5] == "mute " and meta.canMute(channel, nick) and inChannel:
 		#mute Joey until pigs fly
 		#mute Joey until hell freezes over
 		#mute Joey until ...your mom
