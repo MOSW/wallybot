@@ -157,6 +157,8 @@ try: cur
 except: cur = None
 try: channels
 except: channels = {}
+try: chattichans
+except: chattichans = {}
 
 random.seed()
 
@@ -234,6 +236,11 @@ def init(s):
 		meta.conf['reusetimeout'] = 600
 	else:
 		meta.conf['reusetimeout'] = int(meta.conf['reusetimeout'])
+		
+	if 'chattiness' not in meta.conf:
+		meta.conf['chattiness'] = 3
+	else:
+		meta.conf['chattiness'] = int(meta.conf['chattiness'])
 		
 	if 'ignore' not in meta.conf:
 		meta.conf['ignore'] = []
@@ -679,7 +686,22 @@ def msg(s, nick, ident, host, channel, text):
 		#if textLower[: 7] == 'unmute ' and meta.canMute(channel, nick):
 		#	return
 		
-		if re.match(r"(f[eiou]r?g[ei]t|undo) ((th|d)at|[#]?[0-9]+)[?!.]*$", textLower):
+		##
+		## Set Chattiness level
+		if re.match(r"chatt?[iy]ness \d+[?!.]*$", textLower):
+			clevel = int(re.match(r"chatt?[iy]ness (\d+)[?!.]*$", textLower).group(1))
+			meta.conf['chattiness'] = (clevel>20) and 20 or clevel
+			print("Setting chattiness level to", meta.conf['chattiness'])
+			meta.sendMsg(s, channel, "%s, chattiness set to %s" % (nick, meta.conf['chattiness']))
+			return True
+		
+		##
+		## Return chattiness level
+		elif re.match(r"chatt?[iy]ness[?!.]*$", textLower):
+			meta.sendMsg(s, channel, "%s, chattiness is %s" % (nick, meta.conf['chattiness']))
+			return True
+			
+		elif re.match(r"(f[eiou]r?g[ei]t|undo) ((th|d)at|[#]?[0-9]+)[?!.]*$", textLower):
 		
 			# prevent forget spamming
 			foiled = foilCheckForgets(nick, ident, host, channel)
@@ -1063,7 +1085,11 @@ def msg(s, nick, ident, host, channel, text):
 			print(">>>",nick+":", find, verb, tidbit, cur.lastrowid)
 			
 			return False
+			
 		
+		##
+		## Factoid lookup when being spoken to.
+		##
 		textLower = re.sub(r"^\001action", r"/me", textLower)
 		#factoidList = factoid_lookup(textLower, [], [], 0)
 		
@@ -1078,11 +1104,30 @@ def msg(s, nick, ident, host, channel, text):
 			meta.sendMsg(s, channel, random.choice(meta.unknownCmdReplys).format(nick=nick,chan=channel))
 		
 		
-	elif len(textLower) > 5:
+	##
+	## Factoid lookup when not being spoken to.
+	##
+	elif len(textLower) > 4:
+		## Limit speech with chattiness level so he's not annoying
+		## - Each chattiness level represents one message
+		## - Once the level has reached he can speak.
+		if channel not in chattichans:
+			## add channel to chattiness and make him able to talk immediately
+			chattichans[channel] = meta.conf['chattiness']
+		
+		
+		chattichans[channel] = chattichans[channel]+1
+		
+		if chattichans[channel] < meta.conf['chattiness']: return True
+		
+		## chattiness level reached. He can talk now.
+		#chattichans[channel] = 0
+		
 		textLower = re.sub(r"^\001action", r"/me", textLower)
 		
 		#factoidList = factoid_lookup(textLower, [], [], 0)
 		
+		## does this channel need to be censored?
 		explicit = channel in meta.conf['censor_channel']
 		
 		factoidList = new_factoid_lookup(textLower, [], explicit)
@@ -1091,6 +1136,21 @@ def msg(s, nick, ident, host, channel, text):
 	
 	
 	if factoidList:
+		
+		##
+		## Some chattiness fun
+		##
+		if channel not in chattichans:
+			chattichans[channel] = meta.conf['chattiness']
+			
+		## if he was talked to directly, allow him to talk again.
+		if chattichans[channel] < meta.conf['chattiness']:
+			chattichans[channel] = meta.conf['chattiness']
+		else:
+			## otherwise reset to zero chattiness when he speaks to start again.
+			chattichans[channel] = 0
+		
+		
 		
 		reply = random.choice(factoidList)
 		
