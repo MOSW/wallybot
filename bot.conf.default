@@ -4,8 +4,9 @@ port = 6667
 nick = NICKNAME
 ident = IDENTITY
 pass = NICKPASS
-realname = Factoid Bot - auth/own: [YOUR NICK HERE]
+realname = Factoid Bot - owner: [YOUR NICK HERE]
 source = https://github.com/MOSW/wallybot
+help = https://github.com/MOSW/wallybot/wiki/Manual
 
 
 
@@ -22,7 +23,8 @@ debug = True
 logMsg = True
 
 bucket = True
-ReuseTimeout = 1209600
+ReuseTimeout = 2419200
+# 4838400 - 8 weeks (2 months-ish)
 # 2419200 - 4 weeks (1 month-ish)
 # 1209600 - 2 weeks
 # 604800  - 1 week
@@ -33,6 +35,9 @@ ReuseTimeout = 1209600
 # 3600    - 1 hour
 ignore = foo f00 Enigma Kribot KinBot Izbot-0001 Izbot Flea Kritron Soryy708 Soryy Soryy708[A] Soryy708_ Soryy708__ artemis2
 ignoreHost = 7C6B67CC.767B7F8A.ED5A6F9C.IP BD01609C.8049A75C.CBFEC01.IP
+
+
+chattiness = 3
 
 censor_channel = #lingubender
 

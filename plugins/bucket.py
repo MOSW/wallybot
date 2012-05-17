@@ -999,11 +999,13 @@ def msg(s, nick, ident, host, channel, text):
 		elif textLower == "?" or \
 			 textLower == "help" or \
 			 textLower == "docs" or \
+			 textLower == "manual" or \
 			 textLower == "/?":
-			
-			#meta.sendMsg(s, channel, "http://joey.functionalperfection.com/wally/")
-			#meta.sendMsg(s, channel, "http://www.lingubender.com/wally/")
-			meta.sendMsg(s, channel, "http://pastebin.com/HqtAcWJF")
+			 
+			if "help" in meta.conf:
+				meta.sendMsg(s, channel, meta.conf["help"])
+			else:
+				meta.sendMsg(s, channel, "https://github.com/MOSW/wallybot/wiki/Manual")
 			
 			return False
 		
