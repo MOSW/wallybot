@@ -1,4 +1,4 @@
 *.pyc
 bot.conf
 msg.log
-bucket.sql
+*.sql

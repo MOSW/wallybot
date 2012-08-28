@@ -276,9 +276,40 @@ def init(s):
 					`nick` VARCHAR(32) NOT NULL, 
 					`editable` INTEGER(1) NOT NULL DEFAULT 1,
 					`last_said` INTEGER NOT NULL DEFAULT 0,
-					`explicit` INTEGER(1) NOT NULL DEFAULT 0)""")
+					`explicit` INTEGER(1) NOT NULL DEFAULT 0,
+					`del_id` INTEGER NOT NULL DEFAULT 0,
+					`del_time` INTEGER NOT NULL DEFAULT 0,
+					`del_nick` VARCHAR(32) NULL, 
+					`del_ident` VARCHAR(32) NULL, 
+					`del_host` VARCHAR(128) NULL, 
+					`del_channel` VARCHAR(64) NULL)""")
+	
+	
+	
 	
 	#cur.execute("""ALTER TABLE `factoids` ADD COLUMN `last_said` INTEGER NOT NULL DEFAULT 0""")
+	
+	cur.execute("""SELECT sql FROM sqlite_master WHERE `name` = 'del_factoids'""")
+	(a,) = cur.fetchone();
+	
+	if a.find("`del_id`") == -1:
+		cur.execute("""ALTER TABLE `del_factoids` ADD COLUMN `del_id` INTEGER NOT NULL DEFAULT 0""")
+	
+	if a.find("`del_time`") == -1:
+		cur.execute("""ALTER TABLE `del_factoids` ADD COLUMN `del_time` INTEGER NOT NULL DEFAULT 0""")
+	
+	if a.find("`del_nick`") == -1:
+		cur.execute("""ALTER TABLE `del_factoids` ADD COLUMN `del_nick` VARCHAR(32) NULL""")
+	
+	if a.find("`del_ident`") == -1:
+		cur.execute("""ALTER TABLE `del_factoids` ADD COLUMN `del_ident` VARCHAR(32) NULL""")
+	
+	if a.find("`del_host`") == -1:
+		cur.execute("""ALTER TABLE `del_factoids` ADD COLUMN `del_host` VARCHAR(128) NULL""")
+	
+	if a.find("`del_channel`") == -1:
+		cur.execute("""ALTER TABLE `del_factoids` ADD COLUMN `del_channel` VARCHAR(64) NULL""")
+	
 	
 	conn.commit()
 
@@ -303,19 +334,19 @@ def log(*a):
 		)"""
 
 	
-def factoid_exists(id):
+def factoid_exists_UNUSED(id):
 	cur.execute("""SELECT 1 FROM `factoids` WHERE `id`=? LIMIT 1""", (id,))
 	conn.commit()
 	return not not cur.fetchone()
 
 	
-def factoid_get(id):
+def factoid_get_UNUSED(id):
 	cur.execute("""SELECT * FROM `factoids` WHERE `id`=? LIMIT 1""", (id,))
 	conn.commit()
 	return cur.fetchone()
 
 	
-def factoid_inkling(inkling, limit=None):
+def factoid_inkling_UNUSED(inkling, limit=None):
 	sql = "SELECT * FROM `factoids` WHERE `inkling`=:inkling"
 	if limit: 
 		sql += "LIMIT :limit"
@@ -327,7 +358,7 @@ def factoid_inkling(inkling, limit=None):
 
 
 	
-def factoid_forget(id):
+def factoid_forget_UNUSED(id):
 	f = factoid_get(id)
 	
 	if not f: return None
@@ -341,14 +372,14 @@ def factoid_forget(id):
 	return factoid_delete(id)
 	
 	
-def factoid_delete(id):
+def factoid_delete_UNUSED(id):
 	cur.execute("""DELETE FROM `factoids` WHERE `id`=? LIMIT 1""", (id,))
 	conn.commit()
 	return cur.rowcount
 	
 	
 	
-def factoid_add(text, channel, nick, ident, host):
+def factoid_add_UNUSED(text, channel, nick, ident, host):
 	response = "Ok {nick}"
 	""" 
 	wally is cool
@@ -366,7 +397,7 @@ def factoid_add(text, channel, nick, ident, host):
 	
 	
 	
-def factoid_insert(**kwargs):
+def factoid_insert_UNUSED(**kwargs):
 	unify_kwargs(kwargs, {'table':'factoids', 'protected': 1, 'last_said':0})
 	cur.execute("""INSERT INTO 
 				:table	(`inkling`, `find`, `verb`, `tidbit`, `nick`, `protected`, `said`) 
@@ -380,11 +411,11 @@ def unify_kwargs(args, default):
 		args[name] = name in args and args[name] or value
 	return args
 	
-def factoid_search(text):
+def factoid_search_UNUSED(text):
 	pass
 
 	
-def factoid_lookup(text, factoidList, aliass, depth):
+def factoid_lookup_OLD(text, factoidList, aliass, depth):
 	if depth > 10: return []
 	
 	#factoidList = []
@@ -769,9 +800,9 @@ def msg(s, nick, ident, host, channel, text):
 			#print(res)
 			#return
 			cur.execute("""INSERT INTO 
-							`del_factoids`	(`inkling`, `find`, `verb`, `tidbit`, `nick`, `editable`, `last_said`) 
-								VALUES		(    ?,       ?,      ?,       ?,       ?,        ?,           ?    )
-							""",            ( res[1],    res[2], res[3], res[4],   res[5], res[6],     res[7]))
+				`del_factoids`	(`inkling`, `find`, `verb`, `tidbit`, `nick`, `editable`, `last_said`, `del_id`, `del_time`, `del_nick`, `del_ident`, `del_host`, `del_channel`) 
+				VALUES		( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+				( res[1], res[2], res[3], res[4], res[5], res[6], res[7], id, time.time(), nick, ident, host, channel ))
 			cur.execute("""DELETE FROM `factoids` WHERE `id`=?""", (id,))
 			conn.commit()
 			
@@ -780,6 +811,91 @@ def msg(s, nick, ident, host, channel, text):
 			
 			meta.sendMsg(s, channel, "Ok %s" % nick)
 			return False
+			
+		elif re.match(r"unforget (?:(\d+)|(\S+)\s+(\d\d-\d\d-\d\d\d\d))[?!.]*$", textLower):
+			
+			r = re.match(r"unforget (?:(\d+)|(\S+)\s+(\d\d-\d\d-\d\d\d\d))[?!.]*$", text[7 :], re.I)
+			(id, deleter, since) = r.groups()
+			
+			
+			### Specific ID given. Recover one factoid from deletion.
+			if id:
+				cur.execute("""SELECT * FROM `del_factoids` WHERE `del_id`=? LIMIT 1""", (id,))
+				conn.commit()
+				res = cur.fetchone()
+				if not res:
+					meta.sendMsg(s, channel, "%s, I can not find any deleted factoid with that ID" % nick)
+					return False
+					
+				"""
+				0	`id` INTEGER PRIMARY KEY, 
+				1	`inkling` TEXT NOT NULL, 
+				2	`find` TEXT NOT NULL, 
+				3	`verb` VARCHAR(32) NOT NULL, 
+				4	`tidbit` TEXT NOT NULL, 
+				5	`nick` VARCHAR(32) NOT NULL, 
+				6	`editable` INTEGER(1) NOT NULL DEFAULT 1,
+				7	`last_said` INTEGER NOT NULL DEFAULT 0,
+				8	`explicit` INTEGER(1) NOT NULL DEFAULT 0,
+				9	`del_id` INTEGER NOT NULL DEFAULT 0,
+				10	`del_time` INTEGER NOT NULL DEFAULT 0
+				11	`del_nick` VARCHAR(32) NOT NULL, 
+				12	`del_ident` VARCHAR(32) NOT NULL, 
+				13	`del_host` VARCHAR(128) NOT NULL, 
+				14	`del_channel` VARCHAR(64) NOT NULL)"""
+				
+				cur.execute("""INSERT INTO 
+							`factoids`	(`inkling`, `find`, `verb`, `tidbit`, `nick`, `editable`, `last_said`, `explicit`) 
+							VALUES		(    ?,       ?,      ?,       ?,       ?,       ?,           ?,          ?)
+						""",            ( res[1],   res[2],   res[3],   res[4],   res[5],  res[6],   time.time(),    res[8]))
+						
+				channels[channel]['lastCreatedId'] = cur.lastrowid
+				channels[channel]['lastFactoidId'] = cur.lastrowid
+				
+				meta.sendMsg(s, channel, "Factoid Recovered - %s: %s %s %s :: by:%s del:%s" % (cur.lastrowid, res[2], res[3], res[4], res[5], res[11]))
+				
+				conn.commit()
+				
+				cur.execute("""DELETE FROM `del_factoids` WHERE `id`=?""", (id,))
+				conn.commit()
+				
+				return False
+			
+			
+			if not meta.isAuthor(nick, ident, host):
+				meta.sendMsg(s, channel, "I'm afraid I can't let you do that, %s" % (nick,))
+				return False
+			### No specific id given. Go by deleter and date to recover multiple
+			
+			since = time.mktime(time.strptime(since,"%m-%d-%Y"))
+			
+			cur.execute("""SELECT * FROM `del_factoids` WHERE `del_nick` = ? AND `del_time` >= ?""", (deleter, since))
+			conn.commit()
+			
+			dels = cur.fetchall()
+			
+			for res in dels:
+				cur.execute("""INSERT INTO 
+							`factoids`	(`inkling`, `find`, `verb`, `tidbit`, `nick`, `editable`, `last_said`, `explicit`) 
+							VALUES		(    ?,       ?,      ?,       ?,       ?,       ?,           ?,          ?)
+						""",            ( res[1],   res[2],   res[3],   res[4],   res[5],  res[6],   time.time(),  res[8]))
+						
+				#channels[channel]['lastCreatedId'] = cur.lastrowid
+				#channels[channel]['lastFactoidId'] = cur.lastrowid
+				
+				#meta.sendMsg(s, channel, "Factoid Recovered - %s: %s %s %s :: by:%s del:%s" % (cur.lastrowid, res[2], res[3], res[4], res[5], res[11]))
+				
+				conn.commit()
+				
+				cur.execute("""DELETE FROM `del_factoids` WHERE `id`=?""", (res[0],))
+				conn.commit()
+				
+				#res = cur.fetchone()
+			
+			meta.sendMsg(s, channel, "%d Factoids Recovered" % (len(dels),))
+			return False
+			
+			
 			
 			
 		elif re.match(r"wh?at (was|were) (th|d)at[?!.]*$", textLower):
