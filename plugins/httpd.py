@@ -716,7 +716,7 @@ class MyHandler(BaseHTTPRequestHandler):
 		
 			if w: w += ' AND'
 			
-			w += " `deleter` LIKE ?"
+			w += " `del_nick` LIKE ?"
 			if 'exactnick' in s.get and s.get['exactnick']=='true':
 				p += [s.get['deleter']]
 			else:
