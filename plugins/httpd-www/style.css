@@ -1,0 +1,340 @@
+/* Copyright 2009-2012 Joey
+// 
+// Jobot is released under Affero GPL. Please read the license before continuing.
+// 
+// The latest source can be found here:
+//	 https://github.com/MOSW/wallybot
+*/
+
+
+*{
+	font-family: arial, sans-serif;
+	}
+body{
+	background: #333;
+	color: #FFF;
+	margin: 0 10px;
+	}
+a ,a:hover, a:link, a:visited{
+/*  \m/  */
+	color:#BADA55;
+	}
+	
+.it{
+	float: left;
+	}
+.wbub {
+	background-color: #222;
+	border: 2px solid blue;
+	border-radius: 12px;
+	font-family: Comic Sans MS;
+	font-size: 0.6em;
+	padding: 4px 6px;
+	position: relative;
+	top: 5px;
+	cursor: default;
+	display: inline-block;
+	max-width: 400px;
+	}
+
+.wbub1, .wbub2, .wbub3 {
+    background:blue;
+    display: inline-block;
+    position: relative;
+	vertical-align: top;
+	}
+.wbub1 {
+    border-radius: 4px;
+    height: 8px;
+    width: 8px;
+	margin-top: 7px;
+	}
+.wbub2 {
+    border-radius: 7px;
+    height: 14px;
+    width: 14px;
+	margin-top: 1px;
+	}
+.wbub3 {
+    border-radius: 10px;
+    height: 20px;
+    width: 20px;
+    margin: 2px -15px -5px 1px;
+	}
+#sf{
+	float: right;
+	display: inline;
+	margin: 0;
+	padding: 10px 20px 0;
+	border-bottom-left-radius: 12px;
+	border-bottom-right-radius: 12px;
+	background-color: #000;
+	overflow: hidden;
+	}
+#sf #nick{
+	width: 90px;
+	}
+#sf #id{
+	width: 50px;
+	}
+#sf .extra { display:none; }
+#sf .more {
+    background: #666;
+    display: block;
+    height: 10px;
+    margin: 0 -20px;
+    padding: 0 20px;
+    width: 100%;
+	cursor: pointer;
+	position: relative;
+	}
+#sf .more:hover {
+	background: #A4BF4A;
+	}
+#sf .more > span {
+    border: 1px dotted;
+    display: block;
+    margin: 0 -20px;
+    position: absolute;
+    top: 5px;
+    width: 100%;
+	}
+.sett_links {
+    float: right;
+    position: relative;
+    top: 12px;
+	}
+.sett_links > a {
+    font-size: 0.9em;
+    margin: 0 4px;
+	}
+.frb {
+	clear: both;
+	}
+.frb .showing, .page_control {
+    background-color: #444444;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    float: left;
+    padding: 3px 10px;
+	}
+.page_control{
+	float: right;
+	}
+.page_control .prev{
+	padding-right: 5px;
+	display:none;
+	}
+.page_control .next{
+	padding-left: 5px;
+	display:none;
+	}
+.tlinks .fbut{
+	background: #4495e7;
+	background: -moz-linear-gradient(top,  #4495e7 0%, #0053a6 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#4495e7), color-stop(100%,#0053a6));
+	background: -webkit-linear-gradient(top,  #4495e7 0%,#0053a6 100%);
+	background: -o-linear-gradient(top,  #4495e7 0%,#0053a6 100%);
+	background: -ms-linear-gradient(top,  #4495e7 0%,#0053a6 100%);
+	background: linear-gradient(to bottom,  #4495e7 0%,#0053a6 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4495e7', endColorstr='#0053a6',GradientType=0 );
+	border-color: #0053A6 #0053A6 #000000;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	color: #FFF;
+	font-weight: bold;
+	font-size: 18px;
+	display: inline-block;
+	height: 35px;
+	padding: 0 11px;
+	line-height: 2em;
+	text-align: center;
+	}
+.tlinks .sort{
+	font-size: 0.8em;
+	font-family: monospace;
+	padding-left: 16px;
+	}
+
+.tlinks .sort a{
+	background: #BADA55;
+	color: #000;
+	border: 1px solid #000;
+	padding: 1px 4px;
+	text-decoration: none;
+	font-family: Verdana;
+	}
+.tlinks .sort a:hover, .tlinks .sort a.active{
+	color: #000;
+	border: 1px solid #FFF;
+	text-decoration: none;
+	}
+.fbut .c{
+	font-size: 10px;
+	padding-left: 3px;
+	position: relative;
+	top: -8px;
+	text-shadow: none;
+	}
+.nextpage > a, .prevpage > a  {
+    color: #FFFFFF;
+    display: block;
+    font-size: 18px;
+    padding: 5px 0;
+    text-align: center;
+    width: 100%;
+	}
+.nextpage > a:hover, .prevpage > a:hover  {
+	background-color:#444;
+	}
+.flist{
+	background: #333;
+	overflow: auto;
+	height: 350px;
+	border: 2px inset;
+	}
+	
+.fli{
+	cursor: default;
+	padding: 0 5px;
+	}
+.fli:hover{
+	outline: 1px solid teal;
+	background-color: #444;
+	}
+.fli.editing{
+	outline: 1px solid #bada55;
+	}
+.fli1{
+	background: #232323;
+	}
+.fli2{
+	background: #333;
+	}
+.hilight{
+	font-weight: bold;
+	}
+	
+.fli .delete, .fli .forget, .fli .edit, .fli .cancel, .fli .save, .fli .unforget{
+	cursor: pointer;
+	margin-right: 5px;
+	}
+	
+.fli.editing .edit, .fli.editing .delete, .fli.editing .forget, .fli.editing .unforget{
+	display: none;
+	}
+	
+.fli .cancel, .fli .save{
+	display: none;
+	}
+.fli.editing .cancel, .fli.editing .save{
+	display: inline;
+	}
+
+.type {
+	display:none;
+	}
+.id, .idsep{
+	font-size: 0.9em;
+	font-family: monospace;
+	}
+
+.fli .inklingsep.left{
+	padding-left:5px;
+	}
+.fli .inklingsep.right{
+	padding-right:5px;
+	}
+.fli .find, .fli .verb, .fli .reply{
+	padding: 0 5px;
+	}
+.fli.editing .find, .fli.editing .verb, .fli.editing .reply, .fli.editing .inkling{
+	cursor: text;
+	background-color: #000;
+	}
+.fli .inkling, .fli .inklingsep{
+	font-size: 0.7em;
+	}
+.fli .verb{
+	margin-left: 2px;
+	}
+.fli .creator.d{
+	text-decoration: line-through;
+	}
+.fli .creator{
+	font-family: monospace;
+	margin-left: 5px;
+	cursor: pointer;
+	}
+.fli .creator:hover{
+	background: lightyellow;
+	border: 1px solid tomato;
+	color: tomato;
+	}
+.fli .deleter {
+	font-family: monospace;
+	margin-left: 5px;
+	}
+.fli .lastsaid{
+	float: right;
+	font-family: monospace;
+	color: #BDB76B;
+	}
+
+.userlistw {
+    background: #222;
+    border-radius: 10px;
+    margin: 0 auto;
+    padding: 10px;
+    width: 600px;
+	display: none;
+	}
+.userlist .uli > span {
+    display: inline-block;
+	}
+.uli .delete, .uli .edit, .uli .cancel, .uli .save{
+	cursor: pointer;
+	margin-right: 5px;
+	}
+.userlist .id {width: 40px;}
+.userlist .user {width: 90px;}
+.userlist .pass {width: 90px;}
+.userlist .nick {width: 90px;}
+.userlist .ident {width: 90px;}
+.userlist .host {width: 170px;}
+.userlist .level {width: 40px;}
+
+.userlist .save {display: none;}
+.userlist input.id {display: none;}
+.userlist input.user {display: none;}
+.userlist input.pass {display: none;}
+.userlist input.nick {display: none;}
+.userlist input.ident {display: none;}
+.userlist input.host {display: none;}
+.userlist input.level {display: none;}
+
+
+.adduser {
+	float: right;
+	}
+.adduserlnk {
+	vertical-align: top;
+	}
+.adduserform {
+	display: none;
+	}
+.logout {
+	font-weight: bold;
+	}
+#login{
+	margin: 0;
+	}
+#login form{
+	background: #232323;
+	width: 500px;
+	padding: 20px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
+	}
