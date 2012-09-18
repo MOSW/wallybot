@@ -1,3 +1,10 @@
+## Copyright 2009-2012 Joey
+## 
+## Jobot is released under Affero GPL. Please read the license before continuing.
+## 
+## The latest source can be found here:
+##	 https://github.com/MOSW/wallybot
+##
 import time
 import meta
 import sqlite3

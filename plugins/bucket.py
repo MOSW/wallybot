@@ -1,9 +1,17 @@
+## Copyright 2009-2012 Joey
+## 
+## Jobot is released under Affero GPL. Please read the license before continuing.
+## 
+## The latest source can be found here:
+##	 https://github.com/MOSW/wallybot
+##
 import meta
 import random
 import sqlite3
 import re
 import time
 import sys
+import hashlib
 
 if __name__ == "__main__":
 	input("You opened the wrong file. This one can not run by itself.")
@@ -284,8 +292,25 @@ def init(s):
 					`del_host` VARCHAR(128) NULL, 
 					`del_channel` VARCHAR(64) NULL)""")
 	
+	cur.execute("""CREATE TABLE IF NOT EXISTS `users`(
+					`id` INTEGER PRIMARY KEY, 
+					`user` VARCHAR(32) NOT NULL, 
+					`pass` VARCHAR(32) NOT NULL, 
+					`nick` VARCHAR(32) NOT NULL DEFAULT '', 
+					`ident` VARCHAR(32) NOT NULL DEFAULT '', 
+					`host` VARCHAR(128) NOT NULL DEFAULT '', 
+					`level` INTEGER NOT NULL DEFAULT 0)""")
+	
+	conn.commit()
 	
 	
+	cur.execute("""SELECT * FROM `users` WHERE `user`=? LIMIT 1""",('admin',))
+	
+	res = cur.fetchone()
+	
+	if not res:
+		cur.execute("""INSERT INTO `users` (`user`,`pass`,`level`) VALUES (?, ?, ?)""",('admin', hashlib.md5(bytes(meta.conf['auth']+'94--s9g', 'utf8')).hexdigest(), '99'))
+	conn.commit()
 	
 	#cur.execute("""ALTER TABLE `factoids` ADD COLUMN `last_said` INTEGER NOT NULL DEFAULT 0""")
 	
@@ -674,17 +699,21 @@ def msg(s, nick, ident, host, channel, text):
 	if not meta.conf['bucket']:
 		return True
 	
+	## Dont talk to yourself
 	if nick == meta.conf['nick']:
 		return True
 	
 	
-	
+	## dont talk to strange people 
 	if nick in meta.conf['ignore'] or host in meta.conf['ignorehost']:
 		return False
 	
 	
+	inchannel = True
+	
 	if channel == meta.conf['nick']:
 		channel = nick
+		inchannel = False
 	
 	
 	
@@ -712,26 +741,35 @@ def msg(s, nick, ident, host, channel, text):
 		textLower = textLower[7 :].strip()
 		unknownCommand = True
 		
-		#if textLower[: 5] == "mute " and meta.canMute(channel, nick):
-		#	return
-		#if textLower[: 7] == 'unmute ' and meta.canMute(channel, nick):
-		#	return
 		
-		##
-		## Set Chattiness level
+		
+		###
+		### chattiness
+		###  - Set Chattiness level
+		###
 		if re.match(r"chatt?[iy]ness \d+[?!.]*$", textLower):
+			
 			clevel = int(re.match(r"chatt?[iy]ness (\d+)[?!.]*$", textLower).group(1))
 			meta.conf['chattiness'] = (clevel>20) and 20 or clevel
+			
 			print("Setting chattiness level to", meta.conf['chattiness'])
+			
 			meta.sendMsg(s, channel, "%s, chattiness set to %s" % (nick, meta.conf['chattiness']))
 			return True
 		
-		##
-		## Return chattiness level
+		
+		###
+		### chattiness
+		###  - Return chattiness level
+		###
 		elif re.match(r"chatt?[iy]ness[?!.]*$", textLower):
 			meta.sendMsg(s, channel, "%s, chattiness is %s" % (nick, meta.conf['chattiness']))
 			return True
-			
+		
+		###
+		### forget that
+		###  - forget the last said factoid
+		###
 		elif re.match(r"(f[eiou]r?g[ei]t|undo) ((th|d)at|[#]?[0-9]+)[?!.]*$", textLower):
 		
 			# prevent forget spamming
@@ -777,13 +815,10 @@ def msg(s, nick, ident, host, channel, text):
 				
 			
 			
-			### CURRENTLY WORKING HERE:
-			### need to save fetched factoid and copy it to del_factoids
-			### ps. check to see if auto_increment needs to be off
-			### then write it so that we can undo deletes
-			#cur.execute("""SELECT `editable` FROM `factoids` WHERE `id`=? LIMIT 1""", (id,))
+			
 			cur.execute("""SELECT * FROM `factoids` WHERE `id`=? LIMIT 1""", (id,))
 			conn.commit()
+			
 			res = cur.fetchone()
 			
 			if not res:
@@ -797,8 +832,8 @@ def msg(s, nick, ident, host, channel, text):
 				return False
 			
 			print("<<<", nick, "erased", id)
-			#print(res)
-			#return
+			
+			
 			cur.execute("""INSERT INTO 
 				`del_factoids`	(`inkling`, `find`, `verb`, `tidbit`, `nick`, `editable`, `last_said`, `del_id`, `del_time`, `del_nick`, `del_ident`, `del_host`, `del_channel`) 
 				VALUES		( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
@@ -812,6 +847,79 @@ def msg(s, nick, ident, host, channel, text):
 			meta.sendMsg(s, channel, "Ok %s" % nick)
 			return False
 			
+		###
+		### ls
+		###  - list (deleted) factoids
+		###
+		## TODO: add check for -v
+		## TODO: add check for -d or -del
+		elif re.match(r"ls.*$", textLower):
+			
+			## only authorized people can list factoids
+			if not meta.isAuthor(nick, ident, host):
+				meta.sendMsg(s, channel, "I'm afraid I can't let you do that %s" % (nick,))
+				return False
+				
+			verbose = False
+			deleted = False
+			
+			args = textLower[2:].split()
+			
+			if "-h" in args or "-help" in args or "--help" in args:
+				meta.sendMsg(s, channel, "ls [-d] [-v] [-h]")
+				meta.sendMsg(s, channel, "::   -d   Show deleted factoids (-del | --deleted)")
+				meta.sendMsg(s, channel, "::   -v   Show every bit of info on each factoid (--verbose)")
+				meta.sendMsg(s, channel, "::   -h   Display this help page (--help)")
+				
+				return False
+				
+			if "-v" in args or "--verbose" in args:
+				verbose = True
+				
+			if "-d" in args or "-del" in args or "--deleted" in args:
+				deleted = True
+			
+			if deleted:
+				cur.execute("""SELECT * FROM `del_factoids` ORDER BY `id` DESC LIMIT 10""")
+			else:
+				cur.execute("""SELECT * FROM `factoids` ORDER BY `id` DESC LIMIT 10""")
+			
+			
+			factoids = cur.fetchall()
+			
+			if deleted and not verbose:
+				oShit = "{id}: {find} {verb} {reply} (Del: {deltime} {deleter})"
+			elif deleted: # and verbose
+				oShit = "{id}: {find} ({inkling}) {verb} {reply} :{creator} (Del:{delid} {deltime}:{delchan} {deleter}!{delident}@{delhost})"
+			elif not deleted and not verbose: # normal
+				oShit = "{id}: {find} {verb} {reply} :{creator}"
+			else: # verbose normal factoids
+				oShit = "{id}: {find} ({inkling}) {verb} {reply} :{creator} {lastsaid}"
+				
+			for res in factoids:
+				meta.sendMsg(s, channel, oShit.format( \
+					id = res[0], \
+					inkling = res[1], \
+					find = res[2], \
+					verb = res[3], \
+					reply = res[4], \
+					creator = res[5], \
+					editable = res[6], \
+					lastsaid = res[7], \
+					explicit = res[8], \
+					delid = deleted and res[9] or "", \
+					deltime = deleted and res[10] or "", \
+					deleter = deleted and res[11] or "", \
+					delident = deleted and res[12] or "", \
+					delhost = deleted and res[13] or "", \
+					delchan = deleted and res[14] or ""))
+			return False
+		
+		
+		###
+		### un delete factoid
+		###    unforget [id]|[deleter] [after]
+		###
 		elif re.match(r"unforget (?:(\d+)|(\S+)\s+(\d\d-\d\d-\d\d\d\d))[?!.]*$", textLower):
 			
 			r = re.match(r"unforget (?:(\d+)|(\S+)\s+(\d\d-\d\d-\d\d\d\d))[?!.]*$", text[7 :], re.I)
@@ -865,6 +973,7 @@ def msg(s, nick, ident, host, channel, text):
 			if not meta.isAuthor(nick, ident, host):
 				meta.sendMsg(s, channel, "I'm afraid I can't let you do that, %s" % (nick,))
 				return False
+			
 			### No specific id given. Go by deleter and date to recover multiple
 			
 			since = time.mktime(time.strptime(since,"%m-%d-%Y"))
@@ -897,7 +1006,10 @@ def msg(s, nick, ident, host, channel, text):
 			
 			
 			
-			
+		###
+		### what was that
+		###  - get information about last said factoid
+		###
 		elif re.match(r"wh?at (was|were) (th|d)at[?!.]*$", textLower):
 			#spout info about the last factoid
 			if not channels[channel]['lastFactoidId']:
@@ -926,7 +1038,10 @@ def msg(s, nick, ident, host, channel, text):
 				
 			return False
 			
-			
+		###
+		### who made that
+		###  - get information about the last factoid
+		###
 		elif re.match(r"who made ((th|d)at|[#]?[0-9]+)[?!.]*$", textLower):
 			#spout info about the last factoid
 			if not channels[channel]['lastFactoidId']:
@@ -950,7 +1065,10 @@ def msg(s, nick, ident, host, channel, text):
 			
 			
 			
-			
+		###
+		### mark that explicit
+		###  - dont say a specific factoid in mixed company
+		###
 		elif re.match(r"(un)?mark (that|#?(\d+))( as)? explicit[?!.]*$", textLower):
 			#only ops and above can do that
 			if not (meta.isOp(channel, nick) or meta.isProtected(channel, nick)):
@@ -983,22 +1101,37 @@ def msg(s, nick, ident, host, channel, text):
 			
 			
 			
-		
+		###
+		### shut up
+		###  - silence wally for a while (10 minutes) [see below for more]
+		###
 		elif re.match(r"shut (up|it) f[ouei]r a[ ]wh+ile[?!.]*$", textLower):
 			channels[channel]['shutup'] = time.time() + 600
 			meta.sendMsg(s, channel, "Ok %s, be back in 10 minutes." % nick)
 			return False
 		
-		elif re.match(r"shut (up|it) f[ouei]r (0-9)(m[in]|s[ec]|h|hour[s]|y|year[s])[?!.]*$", textLower):
-			#channels[channel]['shutup'] = time.time() + 600
-			#meta.sendMsg(s, channel, "Ok %s, be back in 10 minutes." % nick)
-			return False
+		###
+		### shut up
+		###  - silence wally for a set amount of time [see below for more]
+		###
+		#elif re.match(r"shut (up|it) f[ouei]r (0-9)(m[in]|s[ec]|h|hour[s]|y|year[s])[?!.]*$", textLower):
+		#	#channels[channel]['shutup'] = time.time() + 600
+		#	#meta.sendMsg(s, channel, "Ok %s, be back in 10 minutes." % nick)
+		#	return False
 			
+		###
+		### shut up
+		###  - silence wally for 2 minutes
+		###
 		elif re.match(r"shut (up|it)[?!.]*$", textLower):
 			channels[channel]['shutup'] = time.time() + 120
 			meta.sendMsg(s, channel, "Ok %s, be back in 2 minutes." % nick)
 			return False
 		
+		###
+		### count
+		###  - count and return the factiods in his arsenal
+		###
 		elif re.match(r"count$", textLower):
 			cur.execute("""SELECT COUNT(*) FROM `factoids`""")
 			conn.commit()
@@ -1008,6 +1141,10 @@ def msg(s, nick, ident, host, channel, text):
 			#print("wally has", count, "factoids")
 			return False
 		
+		###
+		### factoid 666
+		###  - recall and vomit a specific factoid
+		###
 		elif re.match(r"factoid [#]?[0-9]+$", textLower):
 			id = int(re.match(r"factoid [#]?([0-9]+)", textLower).group(1))
 			
@@ -1030,6 +1167,12 @@ def msg(s, nick, ident, host, channel, text):
 			
 			return False
 		
+		###
+		### search
+		###  - search factoids via keywords
+		###
+		## TODO: add -del option for deleted factoids
+		## TODO: add clause to search in 'replies' as well as 'finds'
 		elif re.match(r"search([\s]?[\(\[\{]?[0-9]+[\)\}\]]?)? (.+)", textLower):
 			#return False
 			page, search = re.match(r"search([\s]?[\(\[\{]?[0-9]+[\)\}\]]?)? (.+)", textLower).group(1,2)
@@ -1075,7 +1218,12 @@ def msg(s, nick, ident, host, channel, text):
 				meta.sendMsg(s, channel, "Sorry %s, I couldn't find anything." % nick)
 			
 			return False
-			
+		
+		
+		###
+		### protect
+		###  - channel ops can keep factoids from being deleted by regular folk
+		###
 		elif re.match(r"(unprotect|protect) ((th|d)at|[#]?[0-9]+)[?!.]*$", textLower):
 			#only ops and above can do that
 			if not (meta.isOp(channel, nick) or meta.isProtected(channel, nick)):
@@ -1122,6 +1270,15 @@ def msg(s, nick, ident, host, channel, text):
 				meta.sendMsg(s, channel, meta.conf["help"])
 			else:
 				meta.sendMsg(s, channel, "https://github.com/MOSW/wallybot/wiki/Manual")
+			
+			return False
+			
+		elif textLower == "source":
+			 
+			if "source" in meta.conf:
+				meta.sendMsg(s, channel, meta.conf["source"])
+			else:
+				meta.sendMsg(s, channel, "https://github.com/MOSW/wallybot")
 			
 			return False
 		
